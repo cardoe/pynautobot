@@ -296,12 +296,24 @@ class Endpoint(object):
 
         api_version = api_version or self.api.api_version
 
-        req = Request(
-            base=self.url,
-            token=self.token,
-            http_session=self.api.http_session,
-            api_version=api_version,
-        ).post(args[0] if args else kwargs)
+        # the existing logic creates a bulk if args is truthy
+        # so use the same logic to check if we want to do a PUT
+        # vs a POST in case of single object creation
+        if not args and "id" in kwargs:
+            req = Request(
+                base=self.url,
+                token=self.token,
+                http_session=self.api.http_session,
+                api_version=api_version,
+                key=kwargs["id"],
+            ).put(kwargs)
+        else:
+            req = Request(
+                base=self.url,
+                token=self.token,
+                http_session=self.api.http_session,
+                api_version=api_version,
+            ).post(args[0] if args else kwargs)
 
         return response_loader(req, self.return_obj, self)
 
